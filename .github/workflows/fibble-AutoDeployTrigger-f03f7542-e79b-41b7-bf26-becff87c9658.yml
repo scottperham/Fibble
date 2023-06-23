@@ -29,14 +29,14 @@ jobs:
       - name: Build and push container image to registry
         uses: azure/container-apps-deploy-action@v1
         with:
-          appSourcePath: ${{ github.workspace }}/docker 
+          appSourcePath: ${{ github.workspace }} 
           registryUrl: fibble.azurecr.io
           registryUsername: ${{ secrets.FIBBLE_REGISTRY_USERNAME }}
           registryPassword: ${{ secrets.FIBBLE_REGISTRY_PASSWORD }}
           containerAppName: fibble
           resourceGroup: fibble
           imageToBuild: fibble.azurecr.io/fibble:${{ github.sha }}
-          dockerfilePath: Dockerfile
+          dockerfilePath: ./docker/Dockerfile
 
      
 
