@@ -8,7 +8,11 @@ import {
 } from '../../lib/localStorage'
 import { MigrationStats } from '../modals/MigrateStatsModal'
 
-export const ImmigratePanel = () => {
+type Props = {
+  isDaily: boolean
+}
+
+export const ImmigratePanel = ({isDaily}: Props) => {
   const [isSaveButtonEnabled, setIsSaveButtonEnabled] = useState(false)
 
   const textareaClassNames = {
@@ -64,7 +68,7 @@ export const ImmigratePanel = () => {
       if (!migrationStats) return
 
       if (migrationStats.gameState) {
-        saveGameStateToLocalStorage(true, migrationStats.gameState)
+        saveGameStateToLocalStorage(isDaily, true, migrationStats.gameState)
       }
 
       if (migrationStats.statistics) {

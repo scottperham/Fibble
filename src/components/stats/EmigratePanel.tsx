@@ -7,11 +7,16 @@ import { loadGameStateFromLocalStorage } from '../../lib/localStorage'
 import { loadStats } from '../../lib/stats'
 import { MigrationStats } from '../modals/MigrateStatsModal'
 
-export const EmigratePanel = () => {
+
+type Props = {
+  isDaily: boolean
+}
+
+export const EmigratePanel = ({isDaily}: Props) => {
   const [isCopyButtonEnabled, setIsCopyButtonEnabled] = useState(true)
   const [copyButtonText, setCopyButtonText] = useState('Copy')
   const stats = loadStats()
-  const gameState = loadGameStateFromLocalStorage(true)
+  const gameState = loadGameStateFromLocalStorage(isDaily, true)
 
   const migrationStats: MigrationStats = {
     statistics: stats,

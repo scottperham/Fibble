@@ -7,6 +7,7 @@ import { BaseModal } from './BaseModal'
 
 type Props = {
   isOpen: boolean
+  isDaily: boolean
   handleClose: () => void
 }
 
@@ -15,7 +16,7 @@ export type MigrationStats = {
   gameState: StoredGameState | null
 }
 
-export const MigrateStatsModal = ({ isOpen, handleClose }: Props) => {
+export const MigrateStatsModal = ({ isOpen, handleClose, isDaily }: Props) => {
   const [isEmigrateVisible, setIsEmigrateVisible] = useState(true)
 
   return (
@@ -73,8 +74,8 @@ export const MigrateStatsModal = ({ isOpen, handleClose }: Props) => {
         </div>
       </div>
 
-      {isEmigrateVisible && <EmigratePanel />}
-      {!isEmigrateVisible && <ImmigratePanel />}
+      {isEmigrateVisible && <EmigratePanel isDaily={isDaily} />}
+      {!isEmigrateVisible && <ImmigratePanel isDaily={isDaily} />}
     </BaseModal>
   )
 }

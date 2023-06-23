@@ -4,26 +4,32 @@ export type CharStatus = 'absent' | 'present' | 'correct'
 
 export const getStatuses = (
   solution: string,
-  guesses: string[]
+  guesses: string[],
+  fibs: string[]
 ): { [key: string]: CharStatus } => {
   const charObj: { [key: string]: CharStatus } = {}
   const splitSolution = unicodeSplit(solution)
 
-  guesses.forEach((word) => {
+  guesses.forEach((word, wordIndex) => {
     unicodeSplit(word).forEach((letter, i) => {
-      if (!splitSolution.includes(letter)) {
+      let letterToUse = letter;
+      if (word !== solution) {
+        letterToUse = fibs[wordIndex].charAt(i);
+      }
+
+      if (!Object.prototype.hasOwnProperty.call(charObj, letterToUse) && !splitSolution.includes(letter)) {
         // make status absent
-        return (charObj[letter] = 'absent')
+        return (charObj[letterToUse] = 'absent')
       }
 
       if (letter === splitSolution[i]) {
         //make status correct
-        return (charObj[letter] = 'correct')
+        return (charObj[letterToUse] = 'correct')
       }
 
-      if (charObj[letter] !== 'correct') {
+      if ((!Object.prototype.hasOwnProperty.call(charObj, letterToUse) || charObj[letterToUse] !== 'correct') && solution.indexOf(letter) > -1) {
         //make status present
-        return (charObj[letter] = 'present')
+        return (charObj[letterToUse] = 'present')
       }
     })
   })
@@ -33,7 +39,8 @@ export const getStatuses = (
 
 export const getGuessStatuses = (
   solution: string,
-  guess: string
+  guess: string,
+  fib: string
 ): CharStatus[] => {
   const splitSolution = unicodeSplit(solution)
   const splitGuess = unicodeSplit(guess)

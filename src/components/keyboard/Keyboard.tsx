@@ -10,7 +10,8 @@ type Props = {
   onDelete: () => void
   onEnter: () => void
   solution: string
-  guesses: string[]
+  guesses: string[],
+  fibs: string[],
   isRevealing?: boolean
 }
 
@@ -20,9 +21,10 @@ export const Keyboard = ({
   onEnter,
   solution,
   guesses,
+  fibs,
   isRevealing,
 }: Props) => {
-  const charStatuses = getStatuses(solution, guesses)
+  const charStatuses = getStatuses(solution, guesses, fibs);
 
   const onClick = (value: string) => {
     if (value === 'ENTER') {
@@ -59,6 +61,7 @@ export const Keyboard = ({
       <div className="mb-1 flex justify-center">
         {['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'].map((key) => (
           <Key
+            solution={solution}
             value={key}
             key={key}
             onClick={onClick}
@@ -70,7 +73,8 @@ export const Keyboard = ({
       <div className="mb-1 flex justify-center">
         {['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'].map((key) => (
           <Key
-            value={key}
+          solution={solution}
+          value={key}
             key={key}
             onClick={onClick}
             status={charStatuses[key]}
@@ -79,19 +83,22 @@ export const Keyboard = ({
         ))}
       </div>
       <div className="flex justify-center">
-        <Key width={65.4} value="ENTER" onClick={onClick}>
+        <Key solution={solution}
+            width={65.4} value="ENTER" onClick={onClick}>
           {ENTER_TEXT}
         </Key>
         {['Z', 'X', 'C', 'V', 'B', 'N', 'M'].map((key) => (
           <Key
-            value={key}
+          solution={solution}
+          value={key}
             key={key}
             onClick={onClick}
             status={charStatuses[key]}
             isRevealing={isRevealing}
           />
         ))}
-        <Key width={65.4} value="DELETE" onClick={onClick}>
+        <Key solution={solution}
+            width={65.4} value="DELETE" onClick={onClick}>
           {DELETE_TEXT}
         </Key>
       </div>

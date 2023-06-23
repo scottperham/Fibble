@@ -26,8 +26,7 @@ import {
 import {
   CORRECT_WORD_MESSAGE,
   DISCOURAGE_INAPP_BROWSER_TEXT,
-  GAME_COPIED_MESSAGE,
-  HARD_MODE_ALERT_MESSAGE,
+  GAME_COPIED_MESSAGE, // HARD_MODE_ALERT_MESSAGE,
   NOT_ENOUGH_LETTERS_MESSAGE,
   SHARE_FAILURE_TEXT,
   WIN_MESSAGES,
@@ -43,14 +42,13 @@ import {
 } from './lib/localStorage'
 import { addStatsForCompletedGame, loadStats } from './lib/stats'
 import {
-  findFirstUnusedReveal,
   getGameDate,
   getIsLatestGame,
+  getRandomWord,
+  getSolution,
   isWinningWord,
   isWordInWordList,
   setGameDate,
-  solution,
-  solutionGameDate,
   unicodeLength,
 } from './lib/words'
 
@@ -60,6 +58,10 @@ function App() {
   const prefersDarkMode = window.matchMedia(
     '(prefers-color-scheme: dark)'
   ).matches
+
+  const [isDaily] = useState(
+    () => window.location.search.toLocaleLowerCase() !== '?unlimited'
+  )
 
   const { showError: showErrorAlert, showSuccess: showSuccessAlert } =
     useAlert()
@@ -82,17 +84,34 @@ function App() {
   const [isHighContrastMode, setIsHighContrastMode] = useState(
     getStoredIsHighContrastMode()
   )
+
+  const [{ solution, solutionGameDate }] = useState(() => {
+    if (isDaily) {
+      return getSolution(getGameDate())
+    } else {
+      return getSolution()
+    }
+  })
+
   const [isRevealing, setIsRevealing] = useState(false)
   const [guesses, setGuesses] = useState<string[]>(() => {
-    const loaded = loadGameStateFromLocalStorage(isLatestGame)
-    if (loaded?.solution !== solution) {
+    const loaded = loadGameStateFromLocalStorage(isDaily, isLatestGame)
+    if (loaded?.solution !== solution || isDaily) {
       return []
     }
+
     const gameWasWon = loaded.guesses.includes(solution)
+    const gameWasLost = loaded.guesses.length === MAX_CHALLENGES && !gameWasWon
+    const gameEnded = gameWasWon || gameWasLost
+
+    if (!isDaily && gameEnded) {
+      return []
+    }
+
     if (gameWasWon) {
       setIsGameWon(true)
     }
-    if (loaded.guesses.length === MAX_CHALLENGES && !gameWasWon) {
+    if (gameWasLost) {
       setIsGameLost(true)
       showErrorAlert(CORRECT_WORD_MESSAGE(solution), {
         persist: true,
@@ -101,18 +120,41 @@ function App() {
     return loaded.guesses
   })
 
-  const [stats, setStats] = useState(() => loadStats())
+  const [fibs, setFibs] = useState<string[]>(() => {
+    const loaded = loadGameStateFromLocalStorage(isDaily, isLatestGame)
+    if (loaded?.solution !== solution || isDaily) {
+      return []
+    }
 
-  const [isHardMode, setIsHardMode] = useState(
-    localStorage.getItem('gameMode')
-      ? localStorage.getItem('gameMode') === 'hard'
-      : false
-  )
+    const gameWasWon = loaded.guesses.includes(solution)
+    const gameWasLost = loaded.guesses.length === MAX_CHALLENGES && !gameWasWon
+    const gameEnded = gameWasWon || gameWasLost
+
+    if (!isDaily && gameEnded) {
+      return []
+    }
+
+    let ended = false
+    if (gameWasWon) {
+      ended = true
+      setIsGameWon(true)
+    }
+    if (gameWasLost) {
+      ended = true
+      setIsGameLost(true)
+      showErrorAlert(CORRECT_WORD_MESSAGE(solution), {
+        persist: true,
+      })
+    }
+    return ended ? loaded.guesses : loaded.fibs
+  })
+
+  const [stats, setStats] = useState(() => loadStats())
 
   useEffect(() => {
     // if no game state on load,
     // show the user the how-to info modal
-    if (!loadGameStateFromLocalStorage(true)) {
+    if (!loadGameStateFromLocalStorage(isDaily, true)) {
       setTimeout(() => {
         setIsInfoModalOpen(true)
       }, WELCOME_INFO_MODAL_MS)
@@ -147,15 +189,6 @@ function App() {
     localStorage.setItem('theme', isDark ? 'dark' : 'light')
   }
 
-  const handleHardMode = (isHard: boolean) => {
-    if (guesses.length === 0 || localStorage.getItem('gameMode') === 'hard') {
-      setIsHardMode(isHard)
-      localStorage.setItem('gameMode', isHard ? 'hard' : 'normal')
-    } else {
-      showErrorAlert(HARD_MODE_ALERT_MESSAGE)
-    }
-  }
-
   const handleHighContrastMode = (isHighContrast: boolean) => {
     setIsHighContrastMode(isHighContrast)
     setStoredIsHighContrastMode(isHighContrast)
@@ -166,8 +199,12 @@ function App() {
   }
 
   useEffect(() => {
-    saveGameStateToLocalStorage(getIsLatestGame(), { guesses, solution })
-  }, [guesses])
+    saveGameStateToLocalStorage(isDaily, getIsLatestGame(), {
+      guesses,
+      fibs,
+      solution,
+    })
+  }, [guesses, fibs, solution, isDaily])
 
   useEffect(() => {
     if (isGameWon) {
@@ -186,7 +223,7 @@ function App() {
         setIsStatsModalOpen(true)
       }, (solution.length + 1) * REVEAL_TIME_MS)
     }
-  }, [isGameWon, isGameLost, showSuccessAlert])
+  }, [isGameWon, isGameLost, showSuccessAlert, solution.length, isDaily])
 
   const onChar = (value: string) => {
     if (
@@ -196,6 +233,10 @@ function App() {
     ) {
       setCurrentGuess(`${currentGuess}${value}`)
     }
+  }
+
+  const showHint = (index: number) => {
+    alert(guesses[index])
   }
 
   const onDelete = () => {
@@ -223,17 +264,6 @@ function App() {
       })
     }
 
-    // enforce hard mode - all guesses must contain all previously revealed letters
-    if (isHardMode) {
-      const firstMissingReveal = findFirstUnusedReveal(currentGuess, guesses)
-      if (firstMissingReveal) {
-        setCurrentRowClass('jiggle')
-        return showErrorAlert(firstMissingReveal, {
-          onClose: clearCurrentRowClass,
-        })
-      }
-    }
-
     setIsRevealing(true)
     // turn this back off after all
     // chars have been revealed
@@ -241,17 +271,22 @@ function App() {
       setIsRevealing(false)
     }, REVEAL_TIME_MS * solution.length)
 
-    const winningWord = isWinningWord(currentGuess)
+    const winningWord = isWinningWord(currentGuess, solution)
 
     if (
       unicodeLength(currentGuess) === solution.length &&
       guesses.length < MAX_CHALLENGES &&
       !isGameWon
     ) {
+      setFibs([
+        ...fibs,
+        getRandomWord([...fibs, ...guesses, solution, currentGuess]),
+      ])
       setGuesses([...guesses, currentGuess])
       setCurrentGuess('')
 
       if (winningWord) {
+        setFibs(guesses)
         if (isLatestGame) {
           setStats(addStatsForCompletedGame(stats, guesses.length))
         }
@@ -279,6 +314,7 @@ function App() {
           setIsStatsModalOpen={setIsStatsModalOpen}
           setIsDatePickerModalOpen={setIsDatePickerModalOpen}
           setIsSettingsModalOpen={setIsSettingsModalOpen}
+          isDaily={isDaily}
         />
 
         {!isLatestGame && (
@@ -289,15 +325,19 @@ function App() {
             </p>
           </div>
         )}
-
+        {/* <div>{solution}</div>
+<div>{guesses.join(',')}</div> */}
         <div className="mx-auto flex w-full grow flex-col px-1 pt-2 pb-8 sm:px-6 md:max-w-7xl lg:px-8 short:pb-2 short:pt-2">
           <div className="flex grow flex-col justify-center pb-6 short:pb-2">
             <Grid
               solution={solution}
               guesses={guesses}
+              fibs={fibs}
               currentGuess={currentGuess}
               isRevealing={isRevealing}
               currentRowClassName={currentRowClass}
+              showHint={showHint}
+              isDaily={isDaily}
             />
           </div>
           <Keyboard
@@ -306,6 +346,7 @@ function App() {
             onEnter={onEnter}
             solution={solution}
             guesses={guesses}
+            fibs={fibs}
             isRevealing={isRevealing}
           />
           <InfoModal
@@ -317,6 +358,7 @@ function App() {
             handleClose={() => setIsStatsModalOpen(false)}
             solution={solution}
             guesses={guesses}
+            fibs={fibs}
             gameStats={stats}
             isLatestGame={isLatestGame}
             isGameLost={isGameLost}
@@ -331,10 +373,10 @@ function App() {
               setIsStatsModalOpen(false)
               setIsMigrateStatsModalOpen(true)
             }}
-            isHardMode={isHardMode}
             isDarkMode={isDarkMode}
             isHighContrastMode={isHighContrastMode}
             numberOfGuessesMade={guesses.length}
+            isDaily={isDaily}
           />
           <DatePickerModal
             isOpen={isDatePickerModalOpen}
@@ -348,12 +390,11 @@ function App() {
           <MigrateStatsModal
             isOpen={isMigrateStatsModalOpen}
             handleClose={() => setIsMigrateStatsModalOpen(false)}
+            isDaily={isDaily}
           />
           <SettingsModal
             isOpen={isSettingsModalOpen}
             handleClose={() => setIsSettingsModalOpen(false)}
-            isHardMode={isHardMode}
-            handleHardMode={handleHardMode}
             isDarkMode={isDarkMode}
             handleDarkMode={handleDarkMode}
             isHighContrastMode={isHighContrastMode}

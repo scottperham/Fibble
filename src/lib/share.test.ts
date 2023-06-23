@@ -3,9 +3,10 @@ import { generateEmojiGrid } from './share'
 describe('generateEmojiGrid', () => {
   test('generates grid for ascii', () => {
     const guesses = ['EDCBA', 'VWXYZ', 'ABCDE']
+    const fibs = ['FIBBY', 'FIBBY', 'FIBBY']
     const tiles = ['C', 'P', 'A'] // Correct, Present, Absemt
 
-    const grid = generateEmojiGrid('ABCDE', guesses, tiles)
+    const grid = generateEmojiGrid('ABCDE', guesses, fibs, tiles)
     const gridParts = grid.split('\n')
     expect(gridParts[0]).toBe('PPCPP')
     expect(gridParts[1]).toBe('AAAAA')
@@ -13,9 +14,10 @@ describe('generateEmojiGrid', () => {
   })
   test('generates grid for emoji', () => {
     const guesses = ['5️⃣4️⃣3️⃣2️⃣1️⃣', '♠️♥️♦️♣️🔔', '1️⃣2️⃣3️⃣4️⃣5️⃣']
+    const fibs = ['FIBBY', 'FIBBY', 'FIBBY']
     const tiles = ['C', 'P', 'A'] // Correct, Present, Absemt
 
-    const grid = generateEmojiGrid('1️⃣2️⃣3️⃣4️⃣5️⃣', guesses, tiles)
+    const grid = generateEmojiGrid('1️⃣2️⃣3️⃣4️⃣5️⃣', fibs, guesses, tiles)
     const gridParts = grid.split('\n')
     expect(gridParts[0]).toBe('PPCPP')
     expect(gridParts[1]).toBe('AAAAA')

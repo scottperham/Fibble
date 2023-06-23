@@ -13,21 +13,21 @@ beforeEach(() => {
 
 describe('getGuessStatuses', () => {
   test('guess statuses', () => {
-    expect(getGuessStatuses('ABCDE', 'EDCBA')).toEqual([
+    expect(getGuessStatuses('ABCDE', 'EDCBA', 'FIBBY')).toEqual([
       'present',
       'present',
       'correct',
       'present',
       'present',
     ])
-    expect(getGuessStatuses('ABCDE', 'VWXYZ')).toEqual([
+    expect(getGuessStatuses('ABCDE', 'VWXYZ', 'FIBBY')).toEqual([
       'absent',
       'absent',
       'absent',
       'absent',
       'absent',
     ])
-    expect(getGuessStatuses('ABCDE', 'ABCDE')).toEqual([
+    expect(getGuessStatuses('ABCDE', 'ABCDE', 'FIBBY')).toEqual([
       'correct',
       'correct',
       'correct',
@@ -36,7 +36,7 @@ describe('getGuessStatuses', () => {
     ])
 
     // https://github.com/cwackerfuss/react-wordle/issues/456
-    expect(getGuessStatuses('BOSSY', 'SASSY')).toEqual([
+    expect(getGuessStatuses('BOSSY', 'SASSY', 'FIBBY')).toEqual([
       'absent',
       'absent',
       'correct',

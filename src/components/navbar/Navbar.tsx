@@ -13,6 +13,7 @@ type Props = {
   setIsStatsModalOpen: (value: boolean) => void
   setIsDatePickerModalOpen: (value: boolean) => void
   setIsSettingsModalOpen: (value: boolean) => void
+  isDaily: boolean
 }
 
 export const Navbar = ({
@@ -20,6 +21,7 @@ export const Navbar = ({
   setIsStatsModalOpen,
   setIsDatePickerModalOpen,
   setIsSettingsModalOpen,
+  isDaily
 }: Props) => {
   return (
     <div className="navbar">
@@ -49,6 +51,8 @@ export const Navbar = ({
         </div>
       </div>
       <hr></hr>
+      { isDaily && <p className='text-center mt-4 text-blue-600 dark:text-yellow-600'><a href='/?unlimited'>Play Unlimited</a></p> }
+      { !isDaily && <p className='text-center mt-4 text-blue-600 dark:text-yellow-600'><a href='/'>Play Daily</a></p> }
     </div>
   )
 }

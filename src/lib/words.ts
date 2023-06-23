@@ -26,21 +26,22 @@ export const isWordInWordList = (word: string) => {
   )
 }
 
-export const isWinningWord = (word: string) => {
+export const isWinningWord = (word: string, solution: string) => {
   return solution === word
 }
 
 // build a set of previously revealed letters - present and correct
 // guess must use correct letters in that space and any other revealed letters
 // also check if all revealed instances of a letter are used (i.e. two C's)
-export const findFirstUnusedReveal = (word: string, guesses: string[]) => {
+export const findFirstUnusedReveal = (word: string, guesses: string[], fibs: string[], solution: string) => {
   if (guesses.length === 0) {
     return false
   }
 
   const lettersLeftArray = new Array<string>()
   const guess = guesses[guesses.length - 1]
-  const statuses = getGuessStatuses(solution, guess)
+  const fib = fibs[fibs.length - 1]
+  const statuses = getGuessStatuses(solution, guess, fib)
   const splitWord = unicodeSplit(word)
   const splitGuess = unicodeSplit(guess)
 
@@ -107,6 +108,19 @@ export const isValidGameDate = (date: Date) => {
   return differenceInDays(firstGameDate, date) % periodInDays === 0
 }
 
+export const getRandomIndex = () => {
+  return Math.floor(Math.random() * WORDS.length);
+}
+
+export const getRandomWord = (exclude: string[]) => {
+  while (true) {
+    const word = localeAwareUpperCase(WORDS[getRandomIndex()])
+    if (!exclude.includes(word)) {
+      return word
+    }
+  }
+}
+
 export const getIndex = (gameDate: Date) => {
   let start = firstGameDate
   let index = -1
@@ -118,7 +132,7 @@ export const getIndex = (gameDate: Date) => {
   return index
 }
 
-export const getWordOfDay = (index: number) => {
+export const getWordByIndex = (index: number) => {
   if (index < 0) {
     throw new Error('Invalid index')
   }
@@ -126,10 +140,17 @@ export const getWordOfDay = (index: number) => {
   return localeAwareUpperCase(WORDS[index % WORDS.length])
 }
 
-export const getSolution = (gameDate: Date) => {
+export const getSolution = (gameDate?: Date) => {
+
+  if (!gameDate) {
+    return {
+      solution: getRandomWord([])
+    }
+  }
+
   const nextGameDate = getNextGameDate(gameDate)
   const index = getIndex(gameDate)
-  const wordOfTheDay = getWordOfDay(index)
+  const wordOfTheDay = getWordByIndex(index)
   return {
     solution: wordOfTheDay,
     solutionGameDate: gameDate,
@@ -176,5 +197,5 @@ export const getIsLatestGame = () => {
   return parsed === null || !('d' in parsed)
 }
 
-export const { solution, solutionGameDate, solutionIndex, tomorrow } =
-  getSolution(getGameDate())
+// export const { solution, solutionGameDate, solutionIndex, tomorrow } =
+//   getSolution(getGameDate())
