@@ -1,0 +1,42 @@
+name: Trigger auto deployment for fibble
+
+# When this action will be executed
+on:
+  # Automatically trigger it when detected changes in repo
+  push:
+    branches: 
+      [ main ]
+    paths:
+    - 'docker/**'
+    - '.github/workflows/fibble-AutoDeployTrigger-f03f7542-e79b-41b7-bf26-becff87c9658.yml'
+
+  # Allow mannually trigger 
+  workflow_dispatch:
+      
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout to the branch
+        uses: actions/checkout@v2
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.FIBBLE_AZURE_CREDENTIALS }}
+
+      - name: Build and push container image to registry
+        uses: azure/container-apps-deploy-action@v1
+        with:
+          appSourcePath: ${{ github.workspace }}/docker 
+          registryUrl: fibble.azurecr.io
+          registryUsername: ${{ secrets.FIBBLE_REGISTRY_USERNAME }}
+          registryPassword: ${{ secrets.FIBBLE_REGISTRY_PASSWORD }}
+          containerAppName: fibble
+          resourceGroup: fibble
+          imageToBuild: fibble.azurecr.io/fibble:${{ github.sha }}
+          dockerfilePath: Dockerfile
+
+     
+
