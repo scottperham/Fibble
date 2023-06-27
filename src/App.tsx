@@ -86,6 +86,7 @@ function App() {
   )
 
   const [{ solution, solutionGameDate }] = useState(() => {
+    console.log('choosing solution')
     if (isDaily) {
       return getSolution(getGameDate())
     } else {
@@ -96,17 +97,15 @@ function App() {
   const [isRevealing, setIsRevealing] = useState(false)
   const [guesses, setGuesses] = useState<string[]>(() => {
     const loaded = loadGameStateFromLocalStorage(isDaily, isLatestGame)
-    if (loaded?.solution !== solution || isDaily) {
+    console.log('loading guesses')
+    if (loaded?.solution !== solution) {
       return []
     }
+
+    console.log('Existing!')
 
     const gameWasWon = loaded.guesses.includes(solution)
     const gameWasLost = loaded.guesses.length === MAX_CHALLENGES && !gameWasWon
-    const gameEnded = gameWasWon || gameWasLost
-
-    if (!isDaily && gameEnded) {
-      return []
-    }
 
     if (gameWasWon) {
       setIsGameWon(true)
@@ -122,17 +121,13 @@ function App() {
 
   const [fibs, setFibs] = useState<string[]>(() => {
     const loaded = loadGameStateFromLocalStorage(isDaily, isLatestGame)
-    if (loaded?.solution !== solution || isDaily) {
+    console.log('loading fibs')
+    if (loaded?.solution !== solution) {
       return []
     }
 
     const gameWasWon = loaded.guesses.includes(solution)
     const gameWasLost = loaded.guesses.length === MAX_CHALLENGES && !gameWasWon
-    const gameEnded = gameWasWon || gameWasLost
-
-    if (!isDaily && gameEnded) {
-      return []
-    }
 
     let ended = false
     if (gameWasWon) {
@@ -199,6 +194,7 @@ function App() {
   }
 
   useEffect(() => {
+    console.log('saving game state')
     saveGameStateToLocalStorage(isDaily, getIsLatestGame(), {
       guesses,
       fibs,
@@ -402,6 +398,9 @@ function App() {
           />
           <AlertContainer />
         </div>
+      </div>
+      <div className="absolute bottom-2 right-2 dark:text-white">
+        {process.env.REACT_APP_VERSION}
       </div>
     </Div100vh>
   )
